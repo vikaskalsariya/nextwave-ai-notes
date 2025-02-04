@@ -1,0 +1,145 @@
+/* Responsive Design Breakpoints */
+@media screen and (max-width: 480px) {
+  /* Mobile Styles */
+  body {
+    font-size: 14px;
+  }
+
+  .container {
+    width: 100%;
+    padding: 0 10px;
+  }
+
+  .flex-container {
+    flex-direction: column;
+  }
+
+  .responsive-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hide-mobile {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 481px) and (max-width: 768px) {
+  /* Tablet Styles */
+  body {
+    font-size: 16px;
+  }
+
+  .container {
+    width: 90%;
+    margin: 0 auto;
+  }
+
+  .flex-container {
+    flex-wrap: wrap;
+  }
+
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  /* Desktop/Laptop Styles */
+  body {
+    font-size: 18px;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+/* Universal Responsive Utilities */
+.responsive-image {
+  max-width: 100%;
+  height: auto;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.center-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Responsive Typography */
+h1 {
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+}
+
+h2 {
+  font-size: clamp(1.25rem, 4vw, 2rem);
+}
+
+/* Flexible Box and Grid Layouts */
+.flex-container {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.responsive-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Responsive Padding and Margin */
+.responsive-padding {
+  padding: clamp(0.5rem, 2vw, 2rem);
+}
+
+.responsive-margin {
+  margin: clamp(0.5rem, 2vw, 2rem);
+}
+
+/* Responsive Visibility Helpers */
+.show-mobile {
+  display: none;
+}
+
+@media screen and (max-width: 480px) {
+  .show-mobile {
+    display: block;
+  }
+  .hide-mobile {
+    display: none;
+  }
+}
+
+/* Responsive Input and Form Styles */
+input, textarea, select {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Flexible Navigation */
+.responsive-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Responsive Scrolling */
+.scrollable-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Print Styles */
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
