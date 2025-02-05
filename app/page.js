@@ -2,13 +2,36 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTheme } from './components/ThemeProvider';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading or perform any initial setup
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-pulse flex flex-col items-center space-y-4">
+          <div className="w-48 h-48 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
+          <div className="h-8 w-64 bg-gray-300 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-48 bg-gray-300 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-gray-900">
-      <div className="space-y-8">
+      <div className="space-y-8 w-full max-w-md">
         <div className="absolute top-4 right-4">
           <button
             onClick={toggleTheme}
@@ -48,25 +71,18 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-4 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
           <Link 
-            href="/notes" 
-            className="inline-flex items-center px-6 py-3 text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors duration-200"
+            href="/login" 
+            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-center"
           >
-            Get Started
-            <svg 
-              className="ml-2 -mr-1 w-5 h-5" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M13 7l5 5m0 0l-5 5m5-5H6" 
-              />
-            </svg>
+            Login
+          </Link>
+          <Link 
+            href="/signup" 
+            className="px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors duration-300 dark:border-indigo-500 dark:text-indigo-500 dark:hover:bg-indigo-900 text-center"
+          >
+            Sign Up
           </Link>
         </div>
       </div>
