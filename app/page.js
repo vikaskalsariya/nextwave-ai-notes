@@ -3,19 +3,75 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useTheme } from './components/ThemeProvider';
 import { useState, useEffect } from 'react';
+import { notesApi } from '../utils/notesApi';
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
+  const [notes, setNotes] = useState([]);
+  const [isApiLoading, setIsApiLoading] = useState(false);
 
   useEffect(() => {
-    // Simulate loading or perform any initial setup
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+    const fetchNotes = async () => {
+      try {
+        const session = await notesApi.getSession();
+        if (session) {
+          const { data, error } = await notesApi.getNotesByUser(session.user.id);
+          if (error) {
+            toast.error('Failed to fetch notes');
+          } else {
+            setNotes(data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching notes:', error);
+        toast.error('Error fetching notes');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    fetchNotes();
   }, []);
+
+  const handleDeleteNote = async (id) => {
+    if (!id) {
+      toast.error('Invalid note ID');
+      return;
+    }
+
+    try {
+      setIsApiLoading(true);
+      const result = await notesApi.deleteNote(id);
+      
+      if (result.error) {
+        // Handle specific error cases
+        switch (true) {
+          case result.error === 'Note not found':
+            toast.error('This note no longer exists');
+            break;
+          case result.error.includes('Unauthorized'):
+            toast.error('You are not authorized to delete this note');
+            break;
+          case result.error.includes('network'):
+            toast.error('Network error. Please check your connection.');
+            break;
+          default:
+            toast.error(result.error || 'Failed to delete note');
+        }
+      } else {
+        // Successfully deleted
+        setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
+        toast.success('Note deleted successfully');
+      }
+    } catch (error) {
+      console.error('Unexpected error deleting note:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsApiLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -50,41 +106,46 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="w-48 h-48 mx-auto mb-6 rounded-full shadow-lg overflow-hidden">
-          <Image
-            src="/logo.png"
-            alt="NoteSwift logo"
-            width={192}
-            height={192}
-            priority
-            className="w-full h-full object-cover dark:invert hover:scale-105 transition-transform duration-300"
-          />
-        </div>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">NextWave AI Notes</h1>
         
-        <h1 className="text-4xl font-bold text-indigo-600 dark:text-indigo-400">
-          Welcome to AI-Notes!
-        </h1>
-        
-        <div className="max-w-2xl mx-auto space-y-2">
-          <p className="text-lg text-gray-600 dark:text-gray-400">
-            Enjoy using AI-Notes to store your memories, important points, and more in a user-friendly way.
-          </p>
-        </div>
-
-        <div className="pt-4 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+        <div className="space-y-4">
           <Link 
-            href="/login" 
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-center"
+            href="/notes" 
+            className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300"
           >
-            Login
+            Create Note
           </Link>
           <Link 
             href="/signup" 
-            className="px-6 py-3 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors duration-300 dark:border-indigo-500 dark:text-indigo-500 dark:hover:bg-indigo-900 text-center"
+            className="inline-block ml-4 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300"
           >
             Sign Up
           </Link>
         </div>
+
+        {notes.length > 0 && (
+          <div className="mt-8 space-y-4">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Your Recent Notes</h2>
+            {notes.map(note => (
+              <div 
+                key={note.id} 
+                className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md flex justify-between items-center"
+              >
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{note.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 line-clamp-2">{note.description}</p>
+                </div>
+                <button
+                  onClick={() => handleDeleteNote(note.id)}
+                  disabled={isApiLoading}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300 disabled:opacity-50"
+                >
+                  {isApiLoading ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );

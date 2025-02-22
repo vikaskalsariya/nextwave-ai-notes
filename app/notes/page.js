@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { notesApi } from '../../utils/notesApi';
 import { useRouter } from 'next/navigation';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import toast from 'react-hot-toast'; // Assuming you have react-hot-toast installed
 
 export default function NotesPage() {
   const { theme, toggleTheme } = useTheme();
@@ -27,6 +28,10 @@ export default function NotesPage() {
   const [isApiLoading, setIsApiLoading] = useState(false);
   const [apiLoadingMessage, setApiLoadingMessage] = useState('');
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentNote, setCurrentNote] = useState({ title: '', description: '' });
 
   useEffect(() => {
     if (!user) {
@@ -164,6 +169,67 @@ export default function NotesPage() {
     setIsSignOutModalOpen(false);
   };
 
+  const handleDeleteNote = (id) => {
+    setNoteToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!noteToDelete) return;
+    setIsApiLoading(true);
+    setApiLoadingMessage('Deleting note...');
+
+    try {
+      const result = await notesApi.deleteNote(noteToDelete);
+      
+      if (result.error) {
+        // Handle specific error cases
+        if (result.error === 'Note not found') {
+          setApiLoadingMessage('This note no longer exists');
+          toast.error('This note no longer exists');
+        } else if (result.error.includes('Unauthorized')) {
+          setApiLoadingMessage('You are not authorized to delete this note');
+          toast.error('You are not authorized to delete this note');
+        } else {
+          setApiLoadingMessage(result.error || 'Failed to delete note');
+          toast.error(result.error || 'Failed to delete note');
+        }
+      } else {
+        // Successfully deleted
+        setNotes(prev => prev.filter(note => note.id !== noteToDelete));
+        setApiLoadingMessage('Note deleted successfully');
+        toast.success('Note deleted successfully');
+      }
+    } catch (error) {
+      console.error('Unexpected error deleting note:', error);
+      setApiLoadingMessage('An unexpected error occurred');
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsApiLoading(false);
+      setShowDeleteModal(false);
+    }
+  };
+
+  const handleEditNote = (note) => {
+    setCurrentNote(note);
+    setEditModalOpen(true);
+  };
+
+  const handleUpdateNote = async () => {
+    const result = await notesApi.updateNote({
+      id: currentNote.id,
+      title: currentNote.title,
+      description: currentNote.description,
+    });
+    if (result.error) {
+      toast.error(result.error || 'Failed to update note');
+    } else {
+      setNotes(prevNotes => prevNotes.map(note => note.id === currentNote.id ? result.data : note));
+      toast.success('Note updated successfully');
+    }
+    setEditModalOpen(false);
+  };
+
   if (!user) {
     return null; // Will redirect in useEffect
   }
@@ -240,7 +306,7 @@ export default function NotesPage() {
 
               <button
                 onClick={handleSignOutConfirmation}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 flex items-center justify-center"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
               >
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
@@ -320,13 +386,13 @@ export default function NotesPage() {
                 <div className="mt-4 flex justify-end space-x-2">
                   <button 
                     className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
-                    // Add edit functionality
+                    onClick={() => handleEditNote(note)}
                   >
                     Edit
                   </button>
                   <button 
                     className="text-sm text-red-600 dark:text-red-400 hover:underline"
-                    // Add delete functionality
+                    onClick={() => handleDeleteNote(note.id)}
                   >
                     Delete
                   </button>
@@ -428,6 +494,70 @@ export default function NotesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Note Modal */}
+      {editModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Edit Note</h2>
+            <input
+              type="text"
+              value={currentNote.title}
+              onChange={(e) => setCurrentNote({ ...currentNote, title: e.target.value })}
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300"
+              placeholder="Title"
+            />
+            <textarea
+              value={currentNote.description}
+              onChange={(e) => setCurrentNote({ ...currentNote, description: e.target.value })}
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-300"
+              placeholder="Description"
+            />
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setEditModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateNote}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Note Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Confirm Deletion
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to delete this note?
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}

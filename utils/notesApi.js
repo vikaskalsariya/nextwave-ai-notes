@@ -104,20 +104,84 @@ export const notesApi = {
 
   async deleteNote(id) {
     try {
-      // Ensure an active session exists
-      await getSession();
+      // Validate input
+      if (!id) {
+        console.error('Delete Note: No note ID provided');
+        return { error: 'Invalid note ID' };
+      }
 
-      const { error } = await supabase
+      // Ensure an active session exists
+      const session = await getSession();
+      if (!session) {
+        console.error('Delete Note: No active session');
+        return { error: 'Unauthorized: No active session' };
+      }
+
+      // First, verify if the note exists and belongs to the current user
+      const { data: noteData, error: fetchError } = await supabase
+        .from('notes')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        console.error('Delete Note: Error fetching note details', {
+          error: fetchError,
+          noteId: id,
+          userId: session.user.id
+        });
+
+        // Different error handling based on the type of fetch error
+        if (fetchError.code === 'PGRST116') {
+          return { error: 'Note not found' };
+        }
+        return { error: 'Failed to verify note ownership' };
+      }
+
+      // Check if the note belongs to the current user
+      if (noteData.user_id !== session.user.id) {
+        console.warn('Delete Note: Unauthorized deletion attempt', {
+          noteId: id,
+          currentUserId: session.user.id,
+          noteOwnerId: noteData.user_id
+        });
+        return { error: 'Unauthorized: You can only delete your own notes' };
+      }
+
+      // Proceed with deletion
+      const { data, error } = await supabase
         .from('notes')
         .delete()
         .eq('id', id)
-        .throwOnError();
+        .eq('user_id', session.user.id)
+        .select(); // Return the deleted note for confirmation
 
-      if (error) throw error;
-      return { error: null }
+      if (error) {
+        console.error('Delete Note: Deletion failed', {
+          error,
+          noteId: id,
+          userId: session.user.id
+        });
+        throw error;
+      }
+
+      console.log('Delete Note: Successfully deleted', {
+        noteId: id,
+        deletedNote: data
+      });
+
+      return { 
+        error: null, 
+        deletedNote: data ? data[0] : null 
+      };
     } catch (error) {
-      console.error('Error deleting note:', error);
-      return { error: error.message }
+      console.error('Delete Note: Unexpected error', {
+        error: error.message,
+        stack: error.stack
+      });
+      return { 
+        error: error.message || 'Failed to delete note' 
+      };
     }
   }
 };
