@@ -75,11 +75,11 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
         <div className="animate-pulse flex flex-col items-center space-y-4">
-          <div className="w-48 h-48 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
-          <div className="h-8 w-64 bg-gray-300 dark:bg-gray-700 rounded"></div>
-          <div className="h-4 w-48 bg-gray-300 dark:bg-gray-700 rounded"></div>
+          <div className="w-[120px] h-[120px] bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+          <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
         </div>
       </div>
     );
@@ -106,14 +106,24 @@ export default function Home() {
           </button>
         </div>
 
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">NextWave AI Notes</h1>
-        
+        <div className="flex flex-col items-center">
+  <div className="relative w-[120px] h-[120px] mb-4">
+  <Image
+  src="/logo.png"
+  alt="NextWave Notes Logo"
+  fill
+  priority
+    className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full shadow-md dark:invert object-cover"
+/>
+  </div>
+  <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">NextWave AI Notes</h1>
+</div>   
         <div className="space-y-4">
           <Link 
             href="/notes" 
             className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300"
           >
-            Create Note
+            View Notes
           </Link>
           <Link 
             href="/signup" 

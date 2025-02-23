@@ -7,27 +7,22 @@ const ThemeContext = createContext({
 });
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light');
+  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) return savedTheme;
+      
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return systemPrefersDark ? 'dark' : 'light';
+    }
+    return 'light';
+  });
 
   useEffect(() => {
-    // On mount, read the theme from localStorage or system preference
-    const initializeTheme = () => {
-      if (typeof window !== 'undefined') {
-        const savedTheme = localStorage.getItem('theme');
-        const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
-        if (savedTheme) {
-          setTheme(savedTheme);
-          document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-        } else if (systemPrefersDark) {
-          setTheme('dark');
-          document.documentElement.classList.add('dark');
-        }
-      }
-    };
-
-    initializeTheme();
-  }, []);
+    setMounted(true);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
@@ -35,6 +30,14 @@ export function ThemeProvider({ children }) {
     localStorage.setItem('theme', newTheme);
     document.documentElement.classList.toggle('dark');
   };
+
+  if (!mounted) {
+    return (
+      <div style={{ visibility: 'hidden' }}>
+        {children}
+      </div>
+    );
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
