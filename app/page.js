@@ -106,8 +106,18 @@ export default function Home() {
           </button>
         </div>
 
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">NextWave AI Notes</h1>
-        
+        <div className="flex flex-col items-center">
+  <div className="relative w-[120px] h-[120px] mb-4">
+  <Image
+  src="/logo.png"
+  alt="NextWave Notes Logo"
+  fill
+  priority
+    className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full shadow-md dark:invert object-cover"
+/>
+  </div>
+  <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">NextWave AI Notes</h1>
+</div>   
         <div className="space-y-4">
           <Link 
             href="/notes" 
