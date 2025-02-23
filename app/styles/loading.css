@@ -1,0 +1,34 @@
+@keyframes wave1 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(20px); }
+}
+
+@keyframes wave2 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-20px); }
+}
+
+@keyframes wave3 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(15px); }
+}
+
+.wave1 {
+  animation: wave1 2s ease-in-out infinite alternate;
+}
+
+.wave2 {
+  animation: wave2 1.8s ease-in-out infinite alternate;
+}
+
+.wave3 {
+  animation: wave3 2.2s ease-in-out infinite alternate;
+}
+
+.loading-logo {
+  transition: all 0.3s ease;
+}
+
+.dark .loading-logo {
+  filter: invert(1);
+}

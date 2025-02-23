@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
+import Image from 'next/image';
 
 const AuthContext = createContext({});
 
@@ -24,45 +25,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const checkSession = async () => {
-      // Check if token is expired
-      if (isTokenExpired()) {
-        await supabase.auth.signOut();
-        setUser(null);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error('Error checking auth state:', error);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      // Check active sessions and sets the user
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        setUser(session.user);
-        setTokenExpiry(); // Refresh token expiry on each session check
-      } else {
-        setUser(null);
-      }
-      
-      setLoading(false);
     };
 
-    checkSession();
+    initializeAuth();
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        setUser(session.user);
-        setTokenExpiry(); // Set new expiry on successful login
-      } else {
-        setUser(null);
-        clearTokenExpiry();
-      }
-      setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email, password) => {
@@ -87,6 +67,28 @@ export const AuthProvider = ({ children }) => {
     return result;
   };
 
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="relative w-24 h-24 animate-pulse">
+            <Image
+              src="/logo.png"
+              alt="NextWave Notes Logo"
+              fill
+              priority
+              className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full shadow-md dark:invert object-cover"
+           />
+          </div>
+          <div className="mt-4 flex flex-col items-center">
+            <div className="h-2 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -96,11 +98,9 @@ export const AuthProvider = ({ children }) => {
       loading,
       isTokenExpired 
     }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);
