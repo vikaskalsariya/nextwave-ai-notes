@@ -1,5 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "./styles/loading.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "../contexts/AuthContext";
 import RemoveExtensionAttributes from "./components/RemoveExtensionAttributes";

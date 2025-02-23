@@ -1,28 +1,32 @@
 'use client';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useTheme } from './components/ThemeProvider';
-import { useState, useEffect } from 'react';
 import { notesApi } from '../utils/notesApi';
 import toast from 'react-hot-toast';
+import DeleteConfirmationModal from './components/DeleteConfirmationModal';
 
 export default function Home() {
-  const { theme, toggleTheme } = useTheme();
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
   const [notes, setNotes] = useState([]);
-  const [isApiLoading, setIsApiLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, noteId: null, noteTitle: '' });
 
   useEffect(() => {
     const fetchNotes = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
-        const session = await notesApi.getSession();
-        if (session) {
-          const { data, error } = await notesApi.getNotesByUser(session.user.id);
-          if (error) {
-            toast.error('Failed to fetch notes');
-          } else {
-            setNotes(data);
-          }
+        const { data, error } = await notesApi.getNotesByUser(user.id);
+        if (error) {
+          toast.error('Failed to fetch notes');
+        } else {
+          setNotes(data);
         }
       } catch (error) {
         console.error('Error fetching notes:', error);
@@ -33,130 +37,158 @@ export default function Home() {
     };
 
     fetchNotes();
-  }, []);
+  }, [user]);
 
   const handleDeleteNote = async (id) => {
-    if (!id) {
-      toast.error('Invalid note ID');
-      return;
-    }
-
     try {
-      setIsApiLoading(true);
-      const result = await notesApi.deleteNote(id);
-      
-      if (result.error) {
-        // Handle specific error cases
-        switch (true) {
-          case result.error === 'Note not found':
-            toast.error('This note no longer exists');
-            break;
-          case result.error.includes('Unauthorized'):
-            toast.error('You are not authorized to delete this note');
-            break;
-          case result.error.includes('network'):
-            toast.error('Network error. Please check your connection.');
-            break;
-          default:
-            toast.error(result.error || 'Failed to delete note');
-        }
+      const { error } = await notesApi.deleteNote(id);
+      if (error) {
+        toast.error('Failed to delete note');
       } else {
-        // Successfully deleted
-        setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
+        setNotes(notes.filter(note => note.id !== id));
         toast.success('Note deleted successfully');
       }
     } catch (error) {
-      console.error('Unexpected error deleting note:', error);
-      toast.error('An unexpected error occurred');
+      console.error('Error deleting note:', error);
+      toast.error('Error deleting note');
     } finally {
-      setIsApiLoading(false);
+      setDeleteModal({ isOpen: false, noteId: null, noteTitle: '' });
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
-        <div className="animate-pulse flex flex-col items-center space-y-4">
-          <div className="w-[120px] h-[120px] bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-          <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-  
+  const openDeleteModal = (note) => {
+    setDeleteModal({ 
+      isOpen: true, 
+      noteId: note.id, 
+      noteTitle: note.title 
+    });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, noteId: null, noteTitle: '' });
+  };
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-gray-900">
-      <div className="space-y-8 w-full max-w-md">
-        <div className="absolute top-4 right-4">
-          <button
-            onClick={toggleTheme}
-            className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 rounded-md"
-            aria-label="Toggle theme"
-          >
-            {theme === 'light' ? (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            )}
-          </button>
+    <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+            Welcome to NextWave Notes
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Your personal space for capturing thoughts, ideas, and memories.
+          </p>
         </div>
 
-        <div className="flex flex-col items-center">
-  <div className="relative w-[120px] h-[120px] mb-4">
-  <Image
-  src="/logo.png"
-  alt="NextWave Notes Logo"
-  fill
-  priority
-    className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full shadow-md dark:invert object-cover"
-/>
-  </div>
-  <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">NextWave AI Notes</h1>
-</div>   
-        <div className="space-y-4">
-          <Link 
-            href="/notes" 
-            className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300"
-          >
-            View Notes
-          </Link>
-          <Link 
-            href="/signup" 
-            className="inline-block ml-4 px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300"
-          >
-            Sign Up
-          </Link>
-        </div>
-
-        {notes.length > 0 && (
-          <div className="mt-8 space-y-4">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Your Recent Notes</h2>
-            {notes.map(note => (
-              <div 
-                key={note.id} 
-                className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md flex justify-between items-center"
+        {user ? (
+          <div className="space-y-8">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                Recent Notes
+              </h2>
+              <Link
+                href="/notes"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400 transition-colors duration-200"
               >
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{note.title}</h3>
-                  <p className="text-gray-600 dark:text-gray-400 line-clamp-2">{note.description}</p>
-                </div>
-                <button
-                  onClick={() => handleDeleteNote(note.id)}
-                  disabled={isApiLoading}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-300 disabled:opacity-50"
-                >
-                  {isApiLoading ? 'Deleting...' : 'Delete'}
-                </button>
+                View All Notes
+              </Link>
+            </div>
+
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 animate-pulse">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : notes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {notes.slice(0, 6).map((note) => (
+                  <div
+                    key={note.id}
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden group"
+                  >
+                    <div className="p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-1">
+                        {note.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3">
+                        {note.content}
+                      </p>
+                      <div className="mt-4 flex justify-between items-center">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {new Date(note.created_at).toLocaleString()}
+                        </span>
+                        <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <button
+                            onClick={() => openDeleteModal(note)}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
+                  />
+                </svg>
+                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No notes</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Get started by creating a new note.
+                </p>
+                <div className="mt-6">
+                  <Link
+                    href="/notes"
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                  >
+                    Create Note
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="mt-8 flex flex-col items-center space-y-4">
+            <Link
+              href="/signup"
+              className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400 transition-colors duration-200"
+            >
+              Sign Up
+            </Link>
+            <Link
+              href="/login"
+              className="w-full sm:w-auto inline-flex justify-center items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+            >
+              Login
+            </Link>
           </div>
         )}
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={closeDeleteModal}
+        onConfirm={() => handleDeleteNote(deleteModal.noteId)}
+        title={deleteModal.noteTitle}
+      />
     </main>
   );
 }
