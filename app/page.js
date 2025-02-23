@@ -75,11 +75,11 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
         <div className="animate-pulse flex flex-col items-center space-y-4">
-          <div className="w-48 h-48 bg-gray-300 dark:bg-gray-700 rounded-full"></div>
-          <div className="h-8 w-64 bg-gray-300 dark:bg-gray-700 rounded"></div>
-          <div className="h-4 w-48 bg-gray-300 dark:bg-gray-700 rounded"></div>
+          <div className="w-[120px] h-[120px] bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+          <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
         </div>
       </div>
     );
@@ -123,7 +123,7 @@ export default function Home() {
             href="/notes" 
             className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300"
           >
-            Create Note
+            View Notes
           </Link>
           <Link 
             href="/signup" 
