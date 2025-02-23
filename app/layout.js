@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "../contexts/AuthContext";
+import RemoveExtensionAttributes from "./components/RemoveExtensionAttributes";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -19,9 +20,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased transition-colors duration-200`}>
+      <body className={`${inter.variable} font-sans antialiased transition-colors duration-200`} suppressHydrationWarning>
         <ThemeProvider>
           <AuthProvider>
+            <RemoveExtensionAttributes />
             {children}
           </AuthProvider>
         </ThemeProvider>
