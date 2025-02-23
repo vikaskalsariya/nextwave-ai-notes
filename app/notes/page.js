@@ -8,7 +8,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { notesApi } from '../../utils/notesApi';
 import { useRouter } from 'next/navigation';
 import ConfirmationModal from '../../components/ConfirmationModal';
-import toast from 'react-hot-toast'; // Assuming you have react-hot-toast installed
+import toast from 'react-hot-toast';
+import { FaRobot } from 'react-icons/fa';
 
 export default function NotesPage() {
   const { theme, toggleTheme } = useTheme();
@@ -32,6 +33,70 @@ export default function NotesPage() {
   const [noteToDelete, setNoteToDelete] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentNote, setCurrentNote] = useState({ title: '', description: '' });
+  const [showAiChat, setShowAiChat] = useState(false);
+  const [messages, setMessages] = useState([
+    { text: "Hello! How can I help you today?", sender: "ai", isTyping: false }
+  ]);
+  const [inputMessage, setInputMessage] = useState("");
+  const [isAiTyping, setIsAiTyping] = useState(false);
+
+  const simulateTypingEffect = (text) => {
+    setIsAiTyping(true);
+    
+    // First show typing indicator
+    setMessages(prev => [...prev, { text: "", sender: "ai", isTyping: true }]);
+    
+    // Reduced wait time before starting to type from 1000ms to 500ms
+    setTimeout(() => {
+      let currentText = "";
+      const textArray = text.split("");
+      let currentIndex = 0;
+      
+      // Remove typing indicator and start showing actual message
+      setMessages(prev => {
+        const newMessages = [...prev];
+        newMessages[newMessages.length - 1] = { 
+          text: currentText, 
+          sender: "ai", 
+          isTyping: false 
+        };
+        return newMessages;
+      });
+
+      // Animate each character - reduced interval from 50ms to 20ms
+      const typeInterval = setInterval(() => {
+        if (currentIndex < textArray.length) {
+          currentText += textArray[currentIndex];
+          setMessages(prev => {
+            const newMessages = [...prev];
+            newMessages[newMessages.length - 1] = { 
+              text: currentText, 
+              sender: "ai", 
+              isTyping: false 
+            };
+            return newMessages;
+          });
+          currentIndex++;
+        } else {
+          clearInterval(typeInterval);
+          setIsAiTyping(false);
+        }
+      }, 20); // Increased typing speed from 50ms to 20ms
+    }, 500); // Reduced initial delay from 1000ms to 500ms
+  };
+
+  const handleSendMessage = () => {
+    if (inputMessage.trim() && !isAiTyping) {
+      // Add user message
+      setMessages(prev => [...prev, { text: inputMessage.trim(), sender: "user", isTyping: false }]);
+      
+      // Simulate AI response with typing effect
+      simulateTypingEffect("I'm here to help! What would you like to know about your notes?");
+      
+      // Clear input
+      setInputMessage("");
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -230,6 +295,13 @@ export default function NotesPage() {
     setEditModalOpen(false);
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   if (!user) {
     return null; // Will redirect in useEffect
   }
@@ -402,6 +474,83 @@ export default function NotesPage() {
           </div>
         )}
       </main>
+
+      {/* Add AI Chat Button */}
+      <button
+        onClick={() => setShowAiChat(!showAiChat)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110 z-50"
+        aria-label="AI Chat"
+      >
+        <FaRobot className="w-6 h-6" />
+      </button>
+
+      {/* AI Chat Modal */}
+      {showAiChat && (
+        <div className="fixed bottom-24 right-6 w-[450px] h-[600px] bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-50 flex flex-col border dark:border-gray-700">
+          <div className="p-5 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-t-xl">
+            <div className="flex items-center gap-2">
+              <FaRobot className="w-6 h-6 text-blue-500" />
+              <h3 className="text-xl font-semibold">AI Assistant</h3>
+            </div>
+            <button
+              onClick={() => setShowAiChat(false)}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-semibold"
+            >
+              ×
+            </button>
+          </div>
+          <div className="flex-1 p-6 overflow-y-auto bg-gray-50 dark:bg-gray-900 space-y-4">
+            <div className="flex flex-col space-y-4">
+              {messages.map((message, index) => (
+                <div key={index} className={`flex items-start space-x-2 ${message.sender === 'user' ? 'justify-end' : ''}`}>
+                  <div className={message.sender === 'user' 
+                    ? 'bg-blue-500 text-white p-3 rounded-lg max-w-[80%]'
+                    : message.isTyping 
+                      ? 'typing-indicator'
+                      : 'ai-message'
+                  }>
+                    {message.isTyping ? (
+                      <div className="flex items-center">
+                        <div className="typing-dot"></div>
+                        <div className="typing-dot"></div>
+                        <div className="typing-dot"></div>
+                      </div>
+                    ) : (
+                      <span className={`${message.sender === 'ai' ? 'typing-text' : ''}`}>
+                        {message.text}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="p-5 border-t dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-xl">
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message..."
+                disabled={isAiTyping}
+                className={`flex-1 px-4 py-3 border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
+                  isAiTyping ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              />
+              <button 
+                onClick={handleSendMessage}
+                disabled={isAiTyping}
+                className={`px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200 font-medium flex items-center gap-2 ${
+                  isAiTyping ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Note Modal */}
       {isModalOpen && (
