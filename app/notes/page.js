@@ -40,6 +40,7 @@ export default function NotesPage() {
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const simulateTypingEffect = (text) => {
     setIsAiTyping(true);
@@ -299,57 +300,31 @@ export default function NotesPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-wrap justify-between items-center space-y-2 sm:space-y-0">
-            <div className="flex items-center">
+        <nav className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="relative flex items-center justify-between h-16">
+            {/* Logo and Title */}
+            <div className="flex items-center flex-shrink-0">
               <Image 
                 src="/logo.png" 
                 alt="NoteSwift logo" 
-                width={48} 
-                height={48} 
+                width={40} 
+                height={40} 
                 priority
-                className="w-12 h-12 rounded-full shadow-md dark:invert object-cover mr-3"
+                className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full shadow-md dark:invert object-cover"
               />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="ml-2 sm:ml-3 text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white truncate">
                 AI-Notes
               </h1>
             </div>
-            <div className="flex flex-wrap justify-center sm:justify-end items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
-              <button
-                onClick={toggleTheme}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded-md relative z-50"
-                aria-label="Toggle theme"
-              >
-                {theme === 'light' ? (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                )}
-              </button>
 
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={handleOpenModal}
-                className={`
-                  relative inline-flex items-center px-4 py-2 
-                  text-sm font-medium rounded-md text-white
-                  bg-indigo-600 hover:bg-indigo-700 
-                  dark:bg-indigo-500 dark:hover:bg-indigo-600 
-                  focus:outline-none focus:ring-2 focus:ring-offset-2 
-                  focus:ring-indigo-500 dark:focus:ring-offset-gray-800
-                  transition-all duration-200
-                  ${notes.length === 0 ? 'animate-attention' : ''}
-                  z-40
-                `}
+                className="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-all duration-200"
               >
-                {notes.length === 0 && (
-                  <span className="absolute inset-0 rounded-md animate-ping-slow bg-indigo-400 opacity-75 -z-10"></span>
-                )}
                 <svg
-                  className="mr-2 -ml-1 h-5 w-5"
+                  className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 flex-shrink-0"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -362,32 +337,86 @@ export default function NotesPage() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                Add Note
+                <span>Add Note</span>
               </button>
 
-              <button
-                onClick={handleSignOutConfirmation}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
-              >
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5 mr-2" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
+              {/* Menu Button (Mobile) */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 rounded-md text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
-                  />
-                </svg>
-                Sign Out
-              </button>
+                  <svg 
+                    className="w-6 h-6" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                </button>
+
+                {/* Dropdown Menu */}
+                {showMenu && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+                    <div className="py-1" role="menu" aria-orientation="vertical">
+                      <button
+                        onClick={() => {
+                          toggleTheme();
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                      >
+                        {theme === 'light' ? (
+                          <>
+                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                            Dark Mode
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            Light Mode
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleSignOutConfirmation();
+                          setShowMenu(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                      >
+                        <svg 
+                          className="w-4 h-4 mr-2" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth={2} 
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
+                          />
+                        </svg>
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </nav>
       </header>
 
       {/* Notes Content */}
@@ -482,36 +511,36 @@ export default function NotesPage() {
       {/* Add AI Chat Button */}
       <button
         onClick={() => setShowAiChat(!showAiChat)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110 z-50"
+        className="fixed bottom-6 right-6 w-12 h-12 md:w-14 md:h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110 z-50"
         aria-label="AI Chat"
       >
-        <FaRobot className="w-6 h-6" />
+        <FaRobot className="w-5 h-5 md:w-6 md:h-6" />
       </button>
 
       {/* AI Chat Modal */}
       {showAiChat && (
-        <div className="fixed bottom-24 right-6 w-[450px] h-[600px] bg-white dark:bg-gray-800 rounded-xl shadow-2xl z-50 flex flex-col border dark:border-gray-700">
-          <div className="p-5 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-t-xl">
+        <div className="fixed bottom-0 right-0 w-full sm:bottom-24 sm:right-6 sm:w-[350px] md:w-[400px] lg:w-[450px] h-[80vh] sm:h-[600px] bg-white dark:bg-gray-800 rounded-t-xl sm:rounded-xl shadow-2xl z-50 flex flex-col border dark:border-gray-700">
+          <div className="p-4 md:p-5 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-t-xl">
             <div className="flex items-center gap-2">
-              <FaRobot className="w-6 h-6 text-blue-500" />
-              <h3 className="text-xl font-semibold">AI Assistant</h3>
+              <FaRobot className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
+              <h3 className="text-lg md:text-xl font-semibold">AI Assistant</h3>
             </div>
             <button
               onClick={() => setShowAiChat(false)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl font-semibold"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl md:text-2xl font-semibold"
             >
               ×
             </button>
           </div>
-          <div className="flex-1 p-6 overflow-y-auto bg-gray-50 dark:bg-gray-900 space-y-4">
+          <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50 dark:bg-gray-900 space-y-4">
             <div className="flex flex-col space-y-4">
               {messages.map((message, index) => (
                 <div key={index} className={`flex items-start space-x-2 ${message.sender === 'user' ? 'justify-end' : ''}`}>
                   <div className={message.sender === 'user' 
-                    ? 'bg-blue-500 text-white p-3 rounded-lg max-w-[80%]'
+                    ? 'bg-blue-500 text-white p-2 md:p-3 rounded-lg max-w-[85%] sm:max-w-[75%] break-words'
                     : message.isTyping 
                       ? 'typing-indicator'
-                      : 'ai-message'
+                      : 'ai-message max-w-[85%] sm:max-w-[75%] break-words'
                   }>
                     {message.isTyping ? (
                       <div className="flex items-center">
@@ -529,8 +558,8 @@ export default function NotesPage() {
               ))}
             </div>
           </div>
-          <div className="p-5 border-t dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-xl">
-            <div className="flex gap-3">
+          <div className="p-3 md:p-5 border-t dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-xl">
+            <div className="flex gap-2 md:gap-3">
               <input
                 type="text"
                 value={inputMessage}
@@ -538,14 +567,14 @@ export default function NotesPage() {
                 onKeyPress={handleKeyPress}
                 placeholder="Type your message..."
                 disabled={isAiTyping}
-                className={`flex-1 px-4 py-3 border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
+                className={`flex-1 px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white ${
                   isAiTyping ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               />
               <button 
                 onClick={handleSendMessage}
                 disabled={isAiTyping}
-                className={`px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200 font-medium flex items-center gap-2 ${
+                className={`px-4 md:px-6 py-2 md:py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors duration-200 font-medium flex items-center gap-2 text-sm md:text-base ${
                   isAiTyping ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
