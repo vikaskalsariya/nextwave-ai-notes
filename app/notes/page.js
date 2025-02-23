@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../components/ThemeProvider';
 import { useAuth } from '../../contexts/AuthContext';
 import { notesApi } from '../../utils/notesApi';
@@ -15,6 +15,7 @@ export default function NotesPage() {
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const router = useRouter();
+  const isFirstMount = useRef(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notes, setNotes] = useState([]);
   const [noteData, setNoteData] = useState({
@@ -99,64 +100,52 @@ export default function NotesPage() {
   };
 
   useEffect(() => {
+    let isSubscribed = true;
+
+    const fetchNotes = async () => {
+      if (!user || !isFirstMount.current) return;
+      
+      setIsLoading(true);
+      setIsApiLoading(true);
+      setApiLoadingMessage('Fetching your notes...');
+
+      try {
+        const { data, error } = await notesApi.getNotesByUser(user.id);
+        if (isSubscribed) {
+          if (error) {
+            console.error('Error loading notes:', error);
+            setApiLoadingMessage('Failed to load notes');
+          } else {
+            setNotes(data || []);
+            setApiLoadingMessage('Notes loaded successfully');
+          }
+        }
+      } catch (error) {
+        if (isSubscribed) {
+          console.error('Error fetching notes:', error);
+          setApiLoadingMessage('Failed to load notes');
+        }
+      } finally {
+        if (isSubscribed) {
+          setIsLoading(false);
+          setIsApiLoading(false);
+          isFirstMount.current = false;
+        }
+      }
+    };
+
     if (!user) {
       router.push('/login');
       return;
     }
 
-    loadNotes();
-  }, [user]);
+    fetchNotes();
 
-  const loadNotes = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    setIsApiLoading(true);
-    setApiLoadingMessage('Fetching your notes...');
-
-    const { data, error } = await notesApi.getNotesByUser(user.id);
-    if (error) {
-      console.error('Error loading notes:', error);
-      setApiLoadingMessage('Failed to load notes');
-    } else {
-      setNotes(data || []);
-      setApiLoadingMessage('Notes loaded successfully');
-    }
-
-    setIsLoading(false);
-    setIsApiLoading(false);
-  };
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
-
-        recognition.onresult = (event) => {
-          const transcript = event.results[event.results.length - 1][0].transcript;
-          setNoteData(prev => ({
-            ...prev,
-            description: prev.description + (prev.description ? ' ' : '') + transcript
-          }));
-        };
-
-        recognition.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
-          setIsListening(false);
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-
-        setRecognition(recognition);
-      }
-    }
-  }, []);
+    // Cleanup function to prevent state updates if component unmounts
+    return () => {
+      isSubscribed = false;
+    };
+  }, [user, router]); // Only depend on user and router
 
   const handleOpenModal = (event) => {
     const button = event.currentTarget;
@@ -378,7 +367,7 @@ export default function NotesPage() {
 
               <button
                 onClick={handleSignOutConfirmation}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800"
               >
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
@@ -404,11 +393,26 @@ export default function NotesPage() {
       {/* Notes Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {isLoading ? (
-          <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-            <div className="animate-pulse">
-              <div className="h-10 bg-gray-300 dark:bg-gray-700 rounded w-64 mb-4"></div>
-              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-48 mb-2"></div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((item) => (
+              <div key={item} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 animate-pulse">
+                {/* Title skeleton */}
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
+                
+                {/* Description skeleton - multiple lines */}
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/6"></div>
+                </div>
+
+                {/* Action buttons skeleton */}
+                <div className="mt-4 flex justify-end space-x-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-14"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : isApiLoading ? (
           <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
