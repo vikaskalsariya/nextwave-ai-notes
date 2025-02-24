@@ -36,7 +36,7 @@ export default function NotesPage() {
   const [currentNote, setCurrentNote] = useState({ title: '', description: '' });
   const [showAiChat, setShowAiChat] = useState(false);
   const [messages, setMessages] = useState([
-    { text: "Hello! How can I help you today?", sender: "ai", isTyping: false }
+    { text: "🚀 Coming Soon! Our AI chatbot is under development. Stay tuned for an amazing conversational experience!", sender: "ai", isTyping: false }
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
