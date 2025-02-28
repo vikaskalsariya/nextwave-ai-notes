@@ -8,32 +8,67 @@ const getSession = async () => {
   return session;
 };
 
+// Helper function to interact with Pinecone API
+async function updatePineconeNote(note) {
+  try {
+    const response = await fetch('/api/pinecone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(note)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Pinecone API Error:', errorData);
+      // Don't throw error, just log it
+    }
+  } catch (error) {
+    // Log error but don't fail the main operation
+    console.error('Error updating Pinecone:', error);
+  }
+}
+
+async function deletePineconeNote(noteId) {
+  try {
+    const response = await fetch('/api/pinecone', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ noteId })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Pinecone Delete Error:', errorData);
+      // Don't throw error, just log it
+    }
+  } catch (error) {
+    // Log error but don't fail the main operation
+    console.error('Error deleting from Pinecone:', error);
+  }
+}
+
 export const notesApi = {
   async createNote({ title, description, userId }) {
     try {
-      // Ensure an active session exists
       const session = await getSession();
       
       console.log('Creating note with data:', { title, description, userId });
       
-      // Validate input
       if (!title || !userId) {
         throw new Error('Title and userId are required');
       }
 
-      // Use the session to create the note with proper authorization
       const { data, error } = await supabase
         .from('notes')
         .insert([
           {
             title,
-            description: description || '', // Ensure description is not undefined
+            description: description || '',
             user_id: userId,
             created_at: new Date().toISOString(),
           }
         ])
         .select()
-        // Explicitly set the authorization header
         .throwOnError();
 
       if (error) {
@@ -46,8 +81,12 @@ export const notesApi = {
         throw error;
       }
 
+      // Store in Pinecone after successful Supabase insert
+      const note = data[0];
+      await updatePineconeNote(note);
+
       console.log('Note created successfully:', data);
-      return { data: data[0], error: null }
+      return { data: note, error: null }
     } catch (error) {
       console.error('Comprehensive Error creating note:', {
         message: error.message,
@@ -60,7 +99,6 @@ export const notesApi = {
 
   async getNotesByUser(userId) {
     try {
-      // Ensure an active session exists
       await getSession();
 
       const { data, error } = await supabase
@@ -78,9 +116,20 @@ export const notesApi = {
     }
   },
 
+  async searchSimilarNotes(query, userId) {
+    try {
+      const response = await fetch(`/api/pinecone?query=${encodeURIComponent(query)}&userId=${userId}`);
+      if (!response.ok) throw new Error('Failed to search notes');
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error searching notes:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
   async updateNote({ id, title, description }) {
     try {
-      // Ensure an active session exists
       await getSession();
 
       const { data, error } = await supabase
@@ -95,7 +144,12 @@ export const notesApi = {
         .throwOnError();
 
       if (error) throw error;
-      return { data: data[0], error: null }
+
+      // Update in Pinecone after successful Supabase update
+      const note = data[0];
+      await updatePineconeNote(note);
+
+      return { data: note, error: null }
     } catch (error) {
       console.error('Error updating note:', error);
       return { data: null, error: error.message }
@@ -104,84 +158,23 @@ export const notesApi = {
 
   async deleteNote(id) {
     try {
-      // Validate input
-      if (!id) {
-        console.error('Delete Note: No note ID provided');
-        return { error: 'Invalid note ID' };
-      }
+      await getSession();
 
-      // Ensure an active session exists
-      const session = await getSession();
-      if (!session) {
-        console.error('Delete Note: No active session');
-        return { error: 'Unauthorized: No active session' };
-      }
-
-      // First, verify if the note exists and belongs to the current user
-      const { data: noteData, error: fetchError } = await supabase
-        .from('notes')
-        .select('user_id')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) {
-        console.error('Delete Note: Error fetching note details', {
-          error: fetchError,
-          noteId: id,
-          userId: session.user.id
-        });
-
-        // Different error handling based on the type of fetch error
-        if (fetchError.code === 'PGRST116') {
-          return { error: 'Note not found' };
-        }
-        return { error: 'Failed to verify note ownership' };
-      }
-
-      // Check if the note belongs to the current user
-      if (noteData.user_id !== session.user.id) {
-        console.warn('Delete Note: Unauthorized deletion attempt', {
-          noteId: id,
-          currentUserId: session.user.id,
-          noteOwnerId: noteData.user_id
-        });
-        return { error: 'Unauthorized: You can only delete your own notes' };
-      }
-
-      // Proceed with deletion
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('notes')
         .delete()
         .eq('id', id)
-        .eq('user_id', session.user.id)
-        .select(); // Return the deleted note for confirmation
+        .throwOnError();
 
-      if (error) {
-        console.error('Delete Note: Deletion failed', {
-          error,
-          noteId: id,
-          userId: session.user.id
-        });
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Delete Note: Successfully deleted', {
-        noteId: id,
-        deletedNote: data
-      });
+      // Delete from Pinecone after successful Supabase deletion
+      await deletePineconeNote(id);
 
-      return { 
-        error: null, 
-        deletedNote: data ? data[0] : null 
-      };
+      return { error: null }
     } catch (error) {
-      console.error('Delete Note: Unexpected error', {
-        error: error.message,
-        stack: error.stack
-      });
-      return { 
-        error: error.message || 'Failed to delete note' 
-      };
+      console.error('Error deleting note:', error);
+      return { error: error.message }
     }
   }
 };
