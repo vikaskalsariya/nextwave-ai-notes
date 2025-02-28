@@ -9,10 +9,10 @@ const getSession = async () => {
 };
 
 // Helper function to interact with Pinecone API
-async function updatePineconeNote(note) {
+async function updatePineconeNote(note,method) {
   try {
     const response = await fetch('/api/pinecone', {
-      method: 'POST',
+      method: method, // Use PUT for updates, POST for new notes
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(note)
     });
@@ -83,7 +83,7 @@ export const notesApi = {
 
       // Store in Pinecone after successful Supabase insert
       const note = data[0];
-      await updatePineconeNote(note);
+      await updatePineconeNote(note,"POST");
 
       console.log('Note created successfully:', data);
       return { data: note, error: null }
@@ -136,8 +136,8 @@ export const notesApi = {
         .from('notes')
         .update({ 
           title, 
-          description, 
-          updated_at: new Date().toISOString() 
+          description,
+          updated_at: new Date().toISOString()
         })
         .eq('id', id)
         .select()
@@ -147,12 +147,12 @@ export const notesApi = {
 
       // Update in Pinecone after successful Supabase update
       const note = data[0];
-      await updatePineconeNote(note);
+      await updatePineconeNote(note,"PUT");
 
       return { data: note, error: null }
     } catch (error) {
       console.error('Error updating note:', error);
-      return { data: null, error: error.message }
+      return { error: error.message }
     }
   },
 
