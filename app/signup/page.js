@@ -31,13 +31,13 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      const { error } = await signUp(email, password);
+      const { error, data } = await signUp(email, password);
       if (error) {
         toast.error(error.message);
         return;
       }
-      toast.success('Account created successfully!');
-      router.push('/notes');
+      toast.success('Account created! Please check your email for verification.');
+      router.push('/verify-email');
     } catch (error) {
       toast.error('Failed to create account. Please try again.');
     } finally {

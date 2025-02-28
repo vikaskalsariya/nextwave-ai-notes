@@ -225,11 +225,17 @@ export default function NotesPage() {
 
   const confirmSignOut = async () => {
     try {
-      await signOut();
+      const { error } = await signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        toast.error('Failed to sign out. Please try again.');
+        return;
+      }
+      toast.success('Signed out successfully');
       router.push('/login');
     } catch (error) {
       console.error('Sign out error:', error);
-      // Optionally show an error toast
+      toast.error('An unexpected error occurred');
     } finally {
       setIsSignOutModalOpen(false);
     }
