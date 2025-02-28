@@ -62,9 +62,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    const result = await supabase.auth.signOut();
-    clearTokenExpiry(); // Clear token expiry on logout
-    return result;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      clearTokenExpiry(); // Clear token expiry on logout
+      setUser(null); // Explicitly clear the user state
+      return { error: null };
+    } catch (error) {
+      console.error('Error signing out:', error);
+      return { error };
+    }
   };
 
   if (loading) {

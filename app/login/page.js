@@ -19,8 +19,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { error, data } = await signIn(email, password);
       if (error) {
+        if (error.message.includes('Email not verified')) {
+          toast.error('Please verify your email before signing in');
+          router.push('/verify-email');
+          return;
+        }
         toast.error(error.message);
         return;
       }
