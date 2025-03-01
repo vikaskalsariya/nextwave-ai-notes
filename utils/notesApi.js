@@ -52,8 +52,6 @@ export const notesApi = {
     try {
       const session = await getSession();
       
-      console.log('Creating note with data:', { title, description, userId });
-      
       if (!title || !userId) {
         throw new Error('Title and userId are required');
       }
@@ -85,7 +83,6 @@ export const notesApi = {
       const note = data[0];
       await updatePineconeNote(note,"POST");
 
-      console.log('Note created successfully:', data);
       return { data: note, error: null }
     } catch (error) {
       console.error('Comprehensive Error creating note:', {

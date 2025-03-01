@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { NextResponse } from 'next/server';
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY, });
 const index = pinecone.Index(process.env.PINECONE_INDEX_NAME);
-
+console.log(process.env.PINECONE_INDEX_NAME,"process.env.PINECONE_INDEX_NAME")
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -54,7 +54,6 @@ export async function POST(req) {
         embedding = embedding.slice(0, 768);
       }
     }
-    console.log("Generated Embedding:", embedding.length);
 
   // Store in Pinecone
 
@@ -84,7 +83,6 @@ export async function POST(req) {
 export async function PUT(req) {
   try {
     const note = await req.json();
-    console.log(note)
     const content = `${note.title} ${note.description}`;
 
     let embedding = [];
