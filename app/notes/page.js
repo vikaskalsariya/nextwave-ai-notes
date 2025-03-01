@@ -102,16 +102,75 @@ export default function NotesPage() {
     }, 500); // Reduced initial delay from 1000ms to 500ms
   };
 
-  const handleSendMessage = () => {
-    if (inputMessage.trim() && !isAiTyping) {
-      // Add user message
-      setMessages(prev => [...prev, { text: inputMessage.trim(), sender: "user", isTyping: false }]);
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isAiTyping) return;
+
+    // Add user message
+    setMessages(prev => [...prev, { text: inputMessage.trim(), sender: "user", isTyping: false }]);
+    setInputMessage("");
+
+    try {
+      // Show typing indicator
+      setIsAiTyping(true);
+      setMessages(prev => [...prev, { text: "", sender: "ai", isTyping: true }]);
+
+      // Call AI chat endpoint with Pinecone integration
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage.trim(),
+          userId: user?.id
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
       
-      // Simulate AI response with typing effect
-      simulateTypingEffect("I'm here to help! What would you like to know about your notes?");
-      
-      // Clear input
-      setInputMessage("");
+      // Remove typing indicator and add AI response
+      setMessages(prev => {
+        const newMessages = prev.filter(msg => !msg.isTyping);
+        return [...newMessages, { text: data.message, sender: "ai", isTyping: false }];
+      });
+
+      // If there are relevant notes, add them as a separate message
+      if (data.relevantNotes && data.relevantNotes.length > 0) {
+        setTimeout(() => {
+          const relevantNotesMessage = {
+            text: "📝 Related Notes:\n" + data.relevantNotes.map(note => 
+              `• ${note.title}: ${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}`
+            ).join('\n'),
+            sender: 'ai',
+            isTyping: false
+          };
+          setMessages(prev => [...prev, relevantNotesMessage]);
+        }, 1000);
+      }
+
+    } catch (error) {
+      console.error('Error in AI chat:', error);
+      setMessages(prev => {
+        const newMessages = prev.filter(msg => !msg.isTyping);
+        return [...newMessages, {
+          text: "I apologize, but I encountered an error. Please try again.",
+          sender: 'ai',
+          isTyping: false
+        }];
+      });
+    } finally {
+      setIsAiTyping(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -304,13 +363,6 @@ export default function NotesPage() {
       toast.success('Note updated successfully');
     }
     setEditModalOpen(false);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
   };
 
   if (!user) {
