@@ -10,6 +10,9 @@ import { useRouter } from 'next/navigation';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import toast from 'react-hot-toast';
 import { FaRobot } from 'react-icons/fa';
+import ReactMarkdown from "react-markdown";
+import rehypeKatex from 'rehype-katex'
+import remarkMath from 'remark-math'
 
 export default function NotesPage() {
   const { theme, toggleTheme } = useTheme();
@@ -102,16 +105,75 @@ export default function NotesPage() {
     }, 500); // Reduced initial delay from 1000ms to 500ms
   };
 
-  const handleSendMessage = () => {
-    if (inputMessage.trim() && !isAiTyping) {
-      // Add user message
-      setMessages(prev => [...prev, { text: inputMessage.trim(), sender: "user", isTyping: false }]);
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isAiTyping) return;
+
+    // Add user message
+    setMessages(prev => [...prev, { text: inputMessage.trim(), sender: "user", isTyping: false }]);
+    setInputMessage("");
+
+    try {
+      // Show typing indicator
+      setIsAiTyping(true);
+      setMessages(prev => [...prev, { text: "", sender: "ai", isTyping: true }]);
+
+      // Call AI chat endpoint with Pinecone integration
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: inputMessage.trim(),
+          userId: user?.id
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
       
-      // Simulate AI response with typing effect
-      simulateTypingEffect("I'm here to help! What would you like to know about your notes?");
-      
-      // Clear input
-      setInputMessage("");
+      // Remove typing indicator and add AI response
+      setMessages(prev => {
+        const newMessages = prev.filter(msg => !msg.isTyping);
+        return [...newMessages, { text: data.message, sender: "ai", isTyping: false }];
+      });
+
+      // If there are relevant notes, add them as a separate message
+      if (data.relevantNotes && data.relevantNotes.length > 0) {
+        setTimeout(() => {
+          const relevantNotesMessage = {
+            text: "### 📝 Related Notes:\n" + data.relevantNotes.map(note => 
+              `#### ${note.title}\n${note.content.substring(0, 100)}${note.content.length > 100 ? '...' : ''}\n\n`
+            ).join('\n'),
+            sender: 'ai',
+            isTyping: false
+          };
+          setMessages(prev => [...prev, relevantNotesMessage]);
+        }, 1000);
+      }
+
+    } catch (error) {
+      console.error('Error in AI chat:', error);
+      setMessages(prev => {
+        const newMessages = prev.filter(msg => !msg.isTyping);
+        return [...newMessages, {
+          text: "I apologize, but I encountered an error. Please try again.",
+          sender: 'ai',
+          isTyping: false
+        }];
+      });
+    } finally {
+      setIsAiTyping(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -304,13 +366,6 @@ export default function NotesPage() {
       toast.success('Note updated successfully');
     }
     setEditModalOpen(false);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
   };
 
   if (!user) {
@@ -540,7 +595,7 @@ export default function NotesPage() {
 
       {/* AI Chat Modal */}
       {showAiChat && (
-        <div className="fixed bottom-0 right-0 w-full sm:bottom-24 sm:right-6 sm:w-[350px] md:w-[400px] lg:w-[450px] h-[80vh] sm:h-[600px] bg-white dark:bg-gray-800 rounded-t-xl sm:rounded-xl shadow-2xl z-50 flex flex-col border dark:border-gray-700">
+        <div className="fixed bottom-0 right-0 w-full sm:bottom-24 sm:right-6 sm:w-[450px] md:w-[500px] lg:w-[550px] h-[80vh] sm:h-[600px] bg-white dark:bg-gray-800 rounded-t-xl sm:rounded-xl shadow-2xl z-50 flex flex-col border dark:border-gray-700">
           <div className="p-4 md:p-5 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900 rounded-t-xl">
             <div className="flex items-center gap-2">
               <FaRobot className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
@@ -571,7 +626,9 @@ export default function NotesPage() {
                       </div>
                     ) : (
                       <span className={`${message.sender === 'ai' ? 'typing-text' : ''}`}>
-                        {message.text}
+                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                          {message.text}
+                        </ReactMarkdown>
                       </span>
                     )}
                   </div>

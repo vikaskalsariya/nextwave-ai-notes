@@ -37,21 +37,22 @@ export async function POST(req) {
         0.00865845, 0.0105652865, 0.030452885, 0.0043186317, -0.0032857617,
         0.012472123, 0.0018997741, 0.028546048, -0.0057805395, -0.007366039,
       ];
-      if (embedding.length < 768) {
-        embedding = embedding.concat(new Array(768 - embedding.length).fill(0));
-      } else if (embedding.length > 768) {
-        embedding = embedding.slice(0, 768);
+      if (embedding.length < 1536) {
+        embedding = embedding.concat(new Array(1536 - embedding.length).fill(0));
+      } else if (embedding.length > 1536) {
+        embedding = embedding.slice(0, 1536);
       }
     } else {
       const response = await openai.embeddings.create({
         model: "text-embedding-ada-002",
         input: content,
       });
+      console.log(response.data[0].embedding.length,"embedding")
       embedding = response.data[0].embedding;
-      if (embedding.length < 768) {
-        embedding = embedding.concat(new Array(768 - embedding.length).fill(0));
-      } else if (embedding.length > 768) {
-        embedding = embedding.slice(0, 768);
+      if (embedding.length < 1536) {
+        embedding = embedding.concat(new Array(1536 - embedding.length).fill(0));
+      } else if (embedding.length > 1536) {
+        embedding = embedding.slice(0, 1536);
       }
     }
 
@@ -109,10 +110,10 @@ export async function PUT(req) {
         0.00865845, 0.0105652865, 0.030452885, 0.0043186317, -0.0032857617,
         0.012472123, 0.0018997741, 0.028546048, -0.0057805395, -0.007366039,
       ];
-      if (embedding.length < 768) {
-        embedding = embedding.concat(new Array(768 - embedding.length).fill(0));
-      } else if (embedding.length > 768) {
-        embedding = embedding.slice(0, 768);
+      if (embedding.length < 1536) {
+        embedding = embedding.concat(new Array(1536 - embedding.length).fill(0));
+      } else if (embedding.length > 1536) {
+        embedding = embedding.slice(0, 1536);
       }
     } else {
       const response = await openai.embeddings.create({
@@ -120,10 +121,10 @@ export async function PUT(req) {
         input: content,
       });
       embedding = response.data[0].embedding;
-      if (embedding.length < 768) {
-        embedding = embedding.concat(new Array(768 - embedding.length).fill(0));
-      } else if (embedding.length > 768) {
-        embedding = embedding.slice(0, 768);
+      if (embedding.length < 1536) {
+        embedding = embedding.concat(new Array(1536 - embedding.length).fill(0));
+      } else if (embedding.length > 1536) {
+        embedding = embedding.slice(0, 1536);
       }
     }
 
