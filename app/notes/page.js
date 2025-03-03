@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { notesApi } from '../../utils/notesApi';
 import { useRouter } from 'next/navigation';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import AIModeSwitch from '../components/AIModeSwitch';
 import toast from 'react-hot-toast';
 import { FaRobot } from 'react-icons/fa';
 import ReactMarkdown from "react-markdown";
@@ -38,8 +39,9 @@ export default function NotesPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [currentNote, setCurrentNote] = useState({ title: '', description: '' });
   const [showAiChat, setShowAiChat] = useState(false);
+  const [aiMode, setAiMode] = useState('gemini');
   const [messages, setMessages] = useState([
-    { text: "🚀 Coming Soon! Our AI chatbot is under development. Stay tuned for an amazing conversational experience!", sender: "ai", isTyping: false }
+    { text: "👋 Hi! I'm your AI assistant powered by Gemini. How can I help you today?", sender: "ai", isTyping: false }
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
@@ -125,7 +127,8 @@ export default function NotesPage() {
         },
         body: JSON.stringify({
           message: inputMessage.trim(),
-          userId: user?.id
+          userId: user?.id,
+          mode: aiMode
         }),
       });
 
@@ -601,12 +604,15 @@ export default function NotesPage() {
               <FaRobot className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
               <h3 className="text-lg md:text-xl font-semibold">AI Assistant</h3>
             </div>
-            <button
-              onClick={() => setShowAiChat(false)}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl md:text-2xl font-semibold"
-            >
-              ×
-            </button>
+            <div className="flex items-center gap-3">
+              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+              <button
+                onClick={() => setShowAiChat(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl md:text-2xl font-semibold"
+              >
+                ×
+              </button>
+            </div>
           </div>
           <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-gray-50 dark:bg-gray-900 space-y-4">
             <div className="flex flex-col space-y-4">
