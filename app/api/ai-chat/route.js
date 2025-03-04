@@ -11,7 +11,7 @@ const index = pinecone.Index(process.env.PINECONE_INDEX_NAME);
 
 export async function POST(req) {
   try {
-    const { message, userId, mode = 'gemini' } = await req.json();
+    const { message, userId, mode = 'gemini', enableSpeech = false } = await req.json();
     console.log("mode",mode)
     let res = {};
 
@@ -25,7 +25,8 @@ export async function POST(req) {
             "similarity": 0.95
           }
         ],
-        "formattedNotes": "📌 **wedding attempt**\nI attended Mahesh's wedding on 14 Dec 2024\n"
+        "formattedNotes": "📌 **wedding attempt**\nI attended Mahesh's wedding on 14 Dec 2024\n",
+        "speech": enableSpeech
       };
     } else {
       // Generate embedding for the user's message  
@@ -112,14 +113,19 @@ export async function POST(req) {
     aiResponse = result.text;
 
   }
+    // Clean the AI response for speech by removing markdown
+    const cleanResponse = aiResponse.replace(/\*\*/g, '').replace(/`/g, '').replace(/\n/g, ' ');
+    
     res = {
       message: aiResponse,
       relevantNotes: relevantNotes,
       formattedNotes: formattedNotes,
-      mode: mode
-      };
-    } 
-    return NextResponse.json(res);
+      mode: mode,
+      speech: enableSpeech,
+      cleanResponse: cleanResponse
+    };
+  } 
+  return NextResponse.json(res);
 
   } catch (error) {
     console.error('Error in AI chat:', error);

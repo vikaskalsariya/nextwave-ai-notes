@@ -9,6 +9,7 @@ import { notesApi } from '../../utils/notesApi';
 import { useRouter } from 'next/navigation';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import AIModeSwitch from '../components/AIModeSwitch';
+import TextToSpeech from '../components/TextToSpeech';
 import toast from 'react-hot-toast';
 import { FaRobot } from 'react-icons/fa';
 import ReactMarkdown from "react-markdown";
@@ -46,6 +47,7 @@ export default function NotesPage() {
   const [inputMessage, setInputMessage] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [speechEnabled, setSpeechEnabled] = useState(false);
   const menuRef = useRef(null);
 
   // Handle click outside to close menu
@@ -128,7 +130,8 @@ export default function NotesPage() {
         body: JSON.stringify({
           message: inputMessage.trim(),
           userId: user?.id,
-          mode: aiMode
+          mode: aiMode,
+          enableSpeech: speechEnabled
         }),
       });
 
@@ -141,7 +144,12 @@ export default function NotesPage() {
       // Remove typing indicator and add AI response
       setMessages(prev => {
         const newMessages = prev.filter(msg => !msg.isTyping);
-        return [...newMessages, { text: data.message, sender: "ai", isTyping: false }];
+        return [...newMessages, { 
+          text: data.message, 
+          sender: "ai", 
+          isTyping: false,
+          cleanText: data.cleanResponse 
+        }];
       });
 
       // If there are relevant notes, add them as a separate message
@@ -605,7 +613,12 @@ export default function NotesPage() {
               <h3 className="text-lg md:text-xl font-semibold">AI Assistant</h3>
             </div>
             <div className="flex items-center gap-3">
-              <AIModeSwitch mode={aiMode} onModeChange={setAiMode} />
+              <AIModeSwitch 
+                mode={aiMode} 
+                onModeChange={setAiMode} 
+                speechEnabled={speechEnabled}
+                onSpeechToggle={() => setSpeechEnabled(!speechEnabled)}
+              />
               <button
                 onClick={() => setShowAiChat(false)}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-xl md:text-2xl font-semibold"
@@ -635,6 +648,9 @@ export default function NotesPage() {
                         <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                           {message.text}
                         </ReactMarkdown>
+                        {message.sender === 'ai' && message.cleanText && (
+                          <TextToSpeech text={message.cleanText} enabled={speechEnabled} />
+                        )}
                       </span>
                     )}
                   </div>
