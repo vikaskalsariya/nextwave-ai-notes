@@ -15,7 +15,7 @@ export async function POST(req) {
     console.log("mode",mode)
     let res = {};
 
-    if (process.env.DEVELOPER !== "development") {
+    if (process.env.DEVELOPER === "development") {
       res = {
         "message": "**In the last 4 months, you attended Mahesh's wedding on 14th December 2024.**",
         "relevantNotes": [
