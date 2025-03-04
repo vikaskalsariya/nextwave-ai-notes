@@ -12,7 +12,6 @@ const index = pinecone.Index(process.env.PINECONE_INDEX_NAME);
 export async function POST(req) {
   try {
     const { message, userId, mode = 'gemini', enableSpeech = false } = await req.json();
-    console.log("mode",mode)
     let res = {};
 
     if (process.env.DEVELOPER !== "development") {
