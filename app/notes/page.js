@@ -42,7 +42,7 @@ export default function NotesPage() {
   const [showAiChat, setShowAiChat] = useState(false);
   const [aiMode, setAiMode] = useState('gemini');
   const [messages, setMessages] = useState([
-    { text: "👋 Hi! I'm your AI assistant powered by Gemini. How can I help you today?", sender: "ai", isTyping: false }
+    { text: "👋 Hi! I'm your AI assistant powered by AI-Notes. How can I help you today?", sender: "ai", isTyping: false }
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
