@@ -11,8 +11,7 @@ const index = pinecone.Index(process.env.PINECONE_INDEX_NAME);
 
 export async function POST(req) {
   try {
-    const { message, userId, mode = 'gemini' } = await req.json();
-    console.log("mode",mode)
+    const { message, userId, mode = 'gemini', enableSpeech = false } = await req.json();
     let res = {};
 
     if (process.env.DEVELOPER === "development") {
@@ -25,7 +24,8 @@ export async function POST(req) {
             "similarity": 0.95
           }
         ],
-        "formattedNotes": "📌 **wedding attempt**\nI attended Mahesh's wedding on 14 Dec 2024\n"
+        "formattedNotes": "📌 **wedding attempt**\nI attended Mahesh's wedding on 14 Dec 2024\n",
+        "speech": enableSpeech
       };
     } else {
       // Generate embedding for the user's message  
@@ -66,30 +66,7 @@ export async function POST(req) {
 
     // Generate AI response using OpenAI
     let chatResponse = ""
-    const system  =  `You are a helpful AI assistant that answers questions based on the user's notes. 
-    If the notes contain relevant information, use it to provide accurate answers.
-    If the notes don't contain relevant information, politely say so and suggest what kind of notes might help.
-    Keep responses concise and focused. Use Markdown formatting for better readability.`
     let aiResponse = ""
-    if(mode === "chatgpt"){
-    chatResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: system
-        },
-        {
-          role: "user",
-          content: `My notes:\n${formattedNotes}\n\nMy question: ${message}`
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    });
-
-    aiResponse = chatResponse.choices[0].message.content;
-  }else{
     const prompt = `You are a helpful AI assistant that answers questions based on the user's notes. 
     If the notes contain relevant information, use it to provide accurate answers.
     If the notes don't contain relevant information, politely say so and suggest what kind of notes might help.
@@ -100,26 +77,46 @@ export async function POST(req) {
   
     My question:
     ${message}`;
+    if(mode === "chatgpt"){
+    chatResponse = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content:  prompt
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 500
+    });
+
+    aiResponse = chatResponse.choices[0].message.content;
+  }else{
+    
     const result = await generateText({
       model: google("gemini-1.5-flash",{
         apiKey:process.env.GOOGLE_GENERATIVE_AI_API_KEY
       }),
       messages: [
-        { role: "assistant", content: system},
-        { role: "user", content: prompt}
+        { role: "assistant", content: prompt},
       ],
     });
     aiResponse = result.text;
 
   }
+    // Clean the AI response for speech by removing markdown
+    const cleanResponse = aiResponse.replace(/\*\*/g, '').replace(/`/g, '').replace(/\n/g, ' ');
+    
     res = {
       message: aiResponse,
       relevantNotes: relevantNotes,
       formattedNotes: formattedNotes,
-      mode: mode
-      };
-    } 
-    return NextResponse.json(res);
+      mode: mode,
+      speech: enableSpeech,
+      cleanResponse: cleanResponse
+    };
+  } 
+  return NextResponse.json(res);
 
   } catch (error) {
     console.error('Error in AI chat:', error);
