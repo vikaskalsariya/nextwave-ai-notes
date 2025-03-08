@@ -511,83 +511,92 @@ export default function NotesPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div key={item} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 animate-pulse">
-                {/* Title skeleton */}
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
-                
-                {/* Description skeleton - multiple lines */}
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-4/6"></div>
-                </div>
-
-                {/* Action buttons skeleton */}
-                <div className="mt-4 flex justify-end space-x-2">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12"></div>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-14"></div>
+              <div key={item} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-3/4 mb-4"></div>
+                <div className="space-y-3">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-5/6"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full w-4/6"></div>
                 </div>
               </div>
             ))}
           </div>
         ) : isApiLoading ? (
-          <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-            <div className="flex flex-col items-center text-center">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="64" 
-                height="64" 
-                viewBox="0 0 24 24" 
-                className="animate-pencil-write text-indigo-600 dark:text-indigo-400"
-              >
-                <path d="M14.078 4.232l-12.64 12.639-1.438 7.129 7.127-1.438 12.641-12.64-5.69-5.69zm-10.369 14.893l-.85-.85 11.141-11.125.849.849-11.14 11.126zm2.008 2.008l-.85-.85 11.141-11.125.85.85-11.141 11.125zm18.283-15.444l-2.816 2.818-5.691-5.691 2.816-2.816 5.691 5.689z" />
-              </svg>
-              <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-md">
-                {apiLoadingMessage}
-              </p>
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
+              </div>
+              <p className="text-gray-600 dark:text-gray-300">{apiLoadingMessage}</p>
             </div>
           </div>
         ) : notes.length === 0 ? (
-          <div className="text-center py-16">
-            <h2 className="text-2xl font-bold text-gray-600 dark:text-gray-400 mb-4">
-              No Notes Yet
-            </h2>
-            <p className="text-gray-500 dark:text-gray-500 mb-6">
-              Click "Add Note" to create your first note
-            </p>
-            <button
-              onClick={handleOpenModal}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-300 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-            >
-              Create First Note
-            </button>
+          <div className="max-w-md mx-auto text-center py-16">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+                  <svg className="w-8 h-8 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Create Your First Note
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Start capturing your thoughts and ideas with AI-powered assistance
+              </p>
+              <button
+                onClick={handleOpenModal}
+                className="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create Note
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {notes.map((note) => (
               <div 
                 key={note.id} 
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
+                className="group bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 overflow-hidden"
               >
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  {note.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 line-clamp-3">
-                  {note.description}
-                </p>
-                <div className="mt-4 flex justify-end space-x-2">
-                  <button 
-                    className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
-                    onClick={() => handleEditNote(note)}
-                  >
-                    Edit
-                  </button>
-                  <button 
-                    className="text-sm text-red-600 dark:text-red-400 hover:underline"
-                    onClick={() => handleDeleteNote(note.id)}
-                  >
-                    Delete
-                  </button>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white line-clamp-1">
+                      {note.title}
+                    </h3>
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={() => handleEditNote(note)}
+                        className="p-1 text-gray-500 hover:text-indigo-500 dark:text-gray-400 dark:hover:text-indigo-400 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors duration-200 mr-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteNote(note.id)}
+                        className="p-1 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-4">
+                    {note.description}
+                  </p>
+                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {new Date(note.created_at).toLocaleString()}
+                  </div>
                 </div>
               </div>
             ))}
@@ -717,7 +726,7 @@ export default function NotesPage() {
                   value={noteData.title}
                   onChange={(e) => setNoteData(prev => ({ ...prev, title: e.target.value }))}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 dark:bg-gray-700 dark:text-white"
                   placeholder="Enter note title"
                 />
               </div>
@@ -731,7 +740,7 @@ export default function NotesPage() {
                   onChange={(e) => setNoteData(prev => ({ ...prev, description: e.target.value }))}
                   required
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 dark:bg-gray-700 dark:text-white"
                   placeholder="Write your note here"
                 />
                 <button
@@ -764,7 +773,7 @@ export default function NotesPage() {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                   disabled={isApiLoading}
                 >
                   Cancel
@@ -773,11 +782,10 @@ export default function NotesPage() {
                   type="submit"
                   disabled={isApiLoading}
                   className={`
-                    px-4 py-2 text-sm font-medium text-white rounded-md
-                    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
+                    px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800
                     ${isApiLoading 
                       ? 'bg-indigo-400 cursor-not-allowed'
-                      : 'bg-indigo-600 hover:bg-indigo-700'
+                      : ''
                     }
                   `}
                 >

@@ -66,30 +66,7 @@ export async function POST(req) {
 
     // Generate AI response using OpenAI
     let chatResponse = ""
-    const system  =  `You are a helpful AI assistant that answers questions based on the user's notes. 
-    If the notes contain relevant information, use it to provide accurate answers.
-    If the notes don't contain relevant information, politely say so and suggest what kind of notes might help.
-    Keep responses concise and focused. Use Markdown formatting for better readability.`
     let aiResponse = ""
-    if(mode === "chatgpt"){
-    chatResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: system
-        },
-        {
-          role: "user",
-          content: `My notes:\n${formattedNotes}\n\nMy question: ${message}`
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    });
-
-    aiResponse = chatResponse.choices[0].message.content;
-  }else{
     const prompt = `You are a helpful AI assistant that answers questions based on the user's notes. 
     If the notes contain relevant information, use it to provide accurate answers.
     If the notes don't contain relevant information, politely say so and suggest what kind of notes might help.
@@ -100,13 +77,28 @@ export async function POST(req) {
   
     My question:
     ${message}`;
+    if(mode === "chatgpt"){
+    chatResponse = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content:  prompt
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 500
+    });
+
+    aiResponse = chatResponse.choices[0].message.content;
+  }else{
+    
     const result = await generateText({
       model: google("gemini-1.5-flash",{
         apiKey:process.env.GOOGLE_GENERATIVE_AI_API_KEY
       }),
       messages: [
-        { role: "assistant", content: system},
-        { role: "user", content: prompt}
+        { role: "assistant", content: prompt},
       ],
     });
     aiResponse = result.text;
