@@ -64,6 +64,36 @@ export default function NotesPage() {
     };
   }, [menuRef]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      
+      recognitionInstance.continuous = true;
+      recognitionInstance.interimResults = false;
+      
+      recognitionInstance.onresult = (event) => {
+        const transcript = event.results[event.results.length - 1][0].transcript;
+        setNoteData(prev => ({
+          ...prev,
+          description: (prev.description + ' ' + transcript).trim()
+        }));
+      };
+      
+      recognitionInstance.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        toast.error('Speech recognition failed. Please try again.');
+      };
+      
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+      
+      setRecognition(recognitionInstance);
+    }
+  }, []);
+
   const simulateTypingEffect = (text) => {
     setIsAiTyping(true);
     
@@ -281,7 +311,10 @@ export default function NotesPage() {
   };
 
   const toggleListening = () => {
-    if (!recognition) return;
+    if (!recognition) {
+      toast.error('Speech recognition is not supported in your browser');
+      return;
+    }
 
     if (isListening) {
       recognition.stop();
@@ -289,6 +322,7 @@ export default function NotesPage() {
     } else {
       recognition.start();
       setIsListening(true);
+      toast.success('Listening... Speak now');
     }
   };
 
@@ -536,7 +570,7 @@ export default function NotesPage() {
               <div className="flex justify-center mb-4">
                 <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
                   <svg className="w-8 h-8 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
               </div>
